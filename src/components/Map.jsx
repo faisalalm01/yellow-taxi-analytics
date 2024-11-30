@@ -1,40 +1,57 @@
-import React, { useState, useEffect } from "react";
+/* eslint-disable react/prop-types */
+import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Cache untuk menyimpan nama jalan
+const streetCache = {};
+
+// Fungsi untuk mengambil nama jalan dari API Nominatim
+const fetchStreetName = async (lat, lon, retries = 3) => {
+  const key = `${lat},${lon}`;
+  if (streetCache[key]) {
+    return streetCache[key]; // Mengembalikan hasil dari cache jika sudah ada
+  }
+
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+  while (retries > 0) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      const street = data.address?.road || "Street name not available";
+      streetCache[key] = street; // Simpan ke cache
+      return street;
+    } catch (error) {
+      retries -= 1;
+      console.warn("Retrying fetch...", retries, error.message);
+      if (retries === 0) {
+        console.error("Failed after retries:", error.message);
+        return "Street name not available";
+      }
+    }
+  }
+};
 
 const Map = ({ trips, setSelectedTrip }) => {
-  const [addressMap, setAddressMap] = useState({});
-
-  // Fetch street names for given coordinates
-  const fetchStreetName = async (lat, lon) => {
-    const key = `${lat},${lon}`;
-    if (addressMap[key]) return addressMap[key]; // Return cached result if available
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-      );
-      const data = await response.json();
-      const streetName = data.address.road || "Unknown Location";
-
-      // Update the address map
-      setAddressMap((prev) => ({
-        ...prev,
-        [key]: streetName,
-      }));
-
-      return streetName;
-    } catch (error) {
-      console.error("Error fetching street name:", error);
-      return "Unknown Location";
-    }
-  };
-
   useEffect(() => {
-    // Preload street names for all markers
-    trips.forEach((trip) => {
-      const { pickup_latitude, pickup_longitude } = trip;
-      fetchStreetName(pickup_latitude, pickup_longitude);
-    });
+    const fetchAllStreetNames = async () => {
+      for (const trip of trips) {
+        try {
+          const streetName = await fetchStreetName(
+            trip.pickup_latitude,
+            trip.pickup_longitude
+          );
+          console.log(`Street for ${trip.unique_id}: ${streetName}`);
+        } catch (error) {
+          console.error("Error fetching street name:", error.message);
+        }
+      }
+    };
+
+    fetchAllStreetNames();
   }, [trips]);
 
   return (
@@ -60,10 +77,9 @@ const Map = ({ trips, setSelectedTrip }) => {
               <p>Fare: ${trip.fare_amount}</p>
               <p>Distance: {trip.trip_distance} miles</p>
               <p>
-                Location:{" "}
-                {addressMap[
-                  `${trip.pickup_latitude},${trip.pickup_longitude}`
-                ] || "Loading..."}
+                Street:{" "}
+                {streetCache[`${trip.pickup_latitude},${trip.pickup_longitude}`] ||
+                  "Loading..."}
               </p>
             </div>
           </Popup>

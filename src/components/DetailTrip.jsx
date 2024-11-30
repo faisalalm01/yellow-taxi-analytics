@@ -1,4 +1,4 @@
-import React from "react";
+/* eslint-disable react/prop-types */
 
 const TripDetails = ({ trip }) => {
   return (
@@ -9,6 +9,8 @@ const TripDetails = ({ trip }) => {
       <p><strong>Fare:</strong> ${trip.fare_amount}</p>
       <p><strong>Distance:</strong> {trip.trip_distance} miles</p>
       <p><strong>Payment:</strong> {trip.payment_type}</p>
+      <p><strong>Pickup Location:</strong> {trip.pickup_latitude}, {trip.pickup_longitude}</p>
+      <p><strong>Dropoff Location:</strong> {trip.dropoff_latitude}, {trip.dropoff_longitude}</p>
     </div>
   );
 };

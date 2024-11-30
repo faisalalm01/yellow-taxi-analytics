@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect } from "react";
 import Map from "../components/Map";
 import Filter from "../components/Filter";
 import TripDetails from "../components/DetailTrip";
@@ -14,7 +15,7 @@ const Home = () => {
     max_fare: "",
     min_distance: "",
     max_distance: "",
-    payment_type: "", // Added payment filter
+    payment_type: "",
   });
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0 });
 
