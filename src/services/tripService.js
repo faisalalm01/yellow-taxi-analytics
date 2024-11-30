@@ -62,8 +62,8 @@ exports.getDataService = async (req, res) => {
 
     res.status(200).json({
       total: result.rowCount,
-      page,
-      limit,
+      page: parseInt(page),
+      limit: parseInt(limit),
       data: result.rows,
     });
   } catch (error) {
